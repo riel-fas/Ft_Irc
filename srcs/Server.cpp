@@ -26,12 +26,12 @@ Server::~Server()
     // close _serverFd
 }
 
-//--5 steps to setup a server socket--\\
+//--5 steps to setup a server socket
 //1. create socket
 //2. bind it to an address and port
 //3. listen for incoming connections
 //4. accept connections
-//5. handle client communication(only for macos)
+//5. handle client communication(using fcntl >> only for macos)
 
 void Server::setupSocket()
 {
@@ -83,7 +83,7 @@ void Server::run()
         if(num < 0)
         {
             if(errno == EINTR)
-                continue; //Interrupted by signal so retry
+                continue; //interrupted by signal so retry
             else
                 throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
         }
@@ -96,30 +96,30 @@ void Server::run()
             if (revents == 0)
                 continue;   // nothing happened on this fd
 
-            // ── New connection ─────────────────────────────────────────
+            //new connection
             if (fd == _serverFd && (revents & POLLIN))
             {
                 acceptClient();
-                // acceptClient adds a new entry to _fds — we'll see it
-                // on the next iteration of the outer while loop.
+                //acceptClient adds a new entry to _fds — we'll see it
+                //on the next iteration of the outer while loop.
                 continue;
             }
 
-            // ── Existing client: data arrived ──────────────────────────
+            //existing client: data arrived
             if (revents & POLLIN)
                 handleRead(fd);
 
-            // ── Existing client: ready to send buffered data ───────────
-            // Check POLLOUT AFTER read, in case read triggered a reply
+            //existing client: ready to send buffered data
+            //check POLLOUT AFTER read, in case read triggered a reply
             if (revents & POLLOUT)
                 handleWrite(fd);
 
-            // ── Client disconnected or socket error ────────────────────
+            //client disconnected or socket error
             if (revents & (POLLHUP | POLLERR | POLLNVAL))
             {
                 disconnectClient(fd);
-                // disconnectClient removes the entry from _fds and erases
-                // from clients map — decrement i so we don't skip the next fd
+                //disconnectClient removes the entry from _fds and erases
+                //from clients map >> decrement i so we don't skip the next fd
                 --x;
             }
         }
