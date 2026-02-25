@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+extern bool g_running;
+
 Server::Server(int port, const std::string &password)
     : _port(port), _serverFd(-1), _password(password)
 {
@@ -67,4 +69,59 @@ void Server::setupSocket()
     _fds.push_back(pfd);
 
     std::cout <<"Server is listening on port " << _port << std::endl;
+}
+
+//the main poll loop
+//This function NEVER returns until g_running is set to false by the
+//signal handler (Ctrl+C)
+//recv() and send() ----MUST ONLY--- be called from inside this loop
+void Server::run()
+{
+    while (g_running)
+    {
+        int num = poll(_fds.data(), _fds.size(), -1);
+        if(num < 0)
+        {
+            if(errno == EINTR)
+                continue; //Interrupted by signal so retry
+            else
+                throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
+        }
+
+        for (size_t x = 0; x < _fds.size(); ++x)
+        {
+            int  fd      = _fds[x].fd;
+            int  revents = _fds[x].revents;
+
+            if (revents == 0)
+                continue;   // nothing happened on this fd
+
+            // ── New connection ─────────────────────────────────────────
+            if (fd == _serverFd && (revents & POLLIN))
+            {
+                acceptClient();
+                // acceptClient adds a new entry to _fds — we'll see it
+                // on the next iteration of the outer while loop.
+                continue;
+            }
+
+            // ── Existing client: data arrived ──────────────────────────
+            if (revents & POLLIN)
+                handleRead(fd);
+
+            // ── Existing client: ready to send buffered data ───────────
+            // Check POLLOUT AFTER read, in case read triggered a reply
+            if (revents & POLLOUT)
+                handleWrite(fd);
+
+            // ── Client disconnected or socket error ────────────────────
+            if (revents & (POLLHUP | POLLERR | POLLNVAL))
+            {
+                disconnectClient(fd);
+                // disconnectClient removes the entry from _fds and erases
+                // from clients map — decrement i so we don't skip the next fd
+                --x;
+            }
+        }
+    }
 }
