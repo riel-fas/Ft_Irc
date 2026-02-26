@@ -19,11 +19,7 @@ Server::Server(int port, const std::string &password)
 
 Server::~Server()
 {
-    // loop over clients map
-    // close each fd
-    // delete each Client*
-    // clear the map
-    // close _serverFd
+//to be configured
 }
 
 //--5 steps to setup a server socket
@@ -32,7 +28,6 @@ Server::~Server()
 //3. listen for incoming connections
 //4. accept connections
 //5. handle client communication(using fcntl >> only for macos)
-
 void Server::setupSocket()
 {
     //socket creates an endpoint for commu. it return an int fd
@@ -74,7 +69,13 @@ void Server::setupSocket()
 //the main poll loop
 //This function NEVER returns until g_running is set to false by the
 //signal handler (Ctrl+C)
-//recv() and send() ----MUST ONLY--- be called from inside this loop
+//{recv() and send() ----MUST ONLY--- be called from inside this loop}
+//in the loop --\/
+//option 1 >> acceptClient adds a new entry to _fds — we'll see it
+//option 2 >> new connection
+//option 3 >> existing client = data arrived
+//option 4 >> existing client: ready to send buffered data
+//option 5 >> client disconnected or socket error
 void Server::run()
 {
     while (g_running)
@@ -95,32 +96,22 @@ void Server::run()
 
             if (revents == 0)
                 continue;   // nothing happened on this fd
-
-            //new connection
             if (fd == _serverFd && (revents & POLLIN))
             {
                 acceptClient();
-                //acceptClient adds a new entry to _fds — we'll see it
-                //on the next iteration of the outer while loop.
                 continue;
             }
-
-            //existing client: data arrived
             if (revents & POLLIN)
                 handleRead(fd);
-
-            //existing client: ready to send buffered data
-            //check POLLOUT AFTER read, in case read triggered a reply
             if (revents & POLLOUT)
                 handleWrite(fd);
 
-            //client disconnected or socket error
             if (revents & (POLLHUP | POLLERR | POLLNVAL))
             {
                 disconnectClient(fd);
+                --x;
                 //disconnectClient removes the entry from _fds and erases
                 //from clients map >> decrement i so we don't skip the next fd
-                --x;
             }
         }
     }
