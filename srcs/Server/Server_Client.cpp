@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../../includes/Server.hpp"
 #include <iostream>
 #include <sstream>      
 #include <stdexcept>    
@@ -48,41 +48,6 @@ void Server::acceptClient()
               << " (fd=" << newFd << ")" << std::endl;
 }
 
-//handle read event on client 
-// Key insight: TCP is a STREAM, not a message protocol.
-// recv() may return:
-// >>> full IRC message  "NICK alice\r\n"
-// >>> partial message   "NICK al" must buffer and wait
-// >>> multiple messages   "NICK a\r\nUSER ...\r\n" must handle all
-// >>> 0  client disconnected cleanly
-// >>> -1 with EAGAIN  no data yet (non-blocking), not an error
-void Server::handleRead(int fd)
-{
-    char buff[512];
-    ssize_t bytes  = recv(fd, buff, sizeof(buff) - 1 , 0);
-    if(bytes == 0)
-    {
-        //a disconnect method will be implemented later
-        disconnectClient(fd);
-        return ;
-    }
-
-    if(bytes < 0)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;     // Non-blocking: no data available right now so its not an error
-        std::cerr << "recv() error on fd " << fd << ": " << strerror(errno) << std::endl;
-        disconnectClient(fd);
-        return;
-    }
-
-    buff[bytes] = '\0';
-    clients[fd]->recvbuff.append(buff, bytes);
-
-    // Now scan the buffer for complete lines
-    processBuffer(*clients[fd]);
-}
-
 
 void    Server::processBuffer(Client &client)
 {
@@ -111,4 +76,37 @@ void Server::processLine(Client &client, const std::string &line)
 
     //sendToClient(client.fd, "ECHO: " + line + "\r\n");
     (void)client;
+}
+
+void Server::disconnectClient(int fd)
+{
+    std::map<int, Client *>::iterator it = clients.find(fd);
+    if (it == clients.end())
+        return;  // already cleaned up
+
+    std::cout << "Client disconnected (fd=" << fd << ", nick="
+              << it->second->nick << ")" << std::endl;
+
+    //YABENMAN remove nick from nickMap
+    //ZBEN_OMA broadcast QUIT to all channels the client was in
+
+    // Remove from _fds vector
+    std::vector<struct pollfd>::iterator pIt = findPollfd(fd);
+    if (pIt != _fds.end())
+        _fds.erase(pIt);
+    // Close the socket and free memory
+    close(fd);
+    delete it->second;
+    clients.erase(it);
+}
+
+void Server::sendToClient(int fd, const std::string &msg)
+{
+    std::map<int, Client *>::iterator it = clients.find(fd);
+    if (it == clients.end())
+        return;  //client already disconnected
+
+    it->second->sendQueue += msg;
+    //signal poll() that we have data to write
+    enableWrite(fd);
 }
