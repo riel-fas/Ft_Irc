@@ -10,7 +10,7 @@ class Client
         int fd;
         std::string recvbuff;
         std::string sendQueue;
-        //will be needed for peer {yabenman} for (user idenetity)
+        //will be needed for {yabenman} for (user idenetity)
         std::string nick;
         std::string user;
         std::string realname;

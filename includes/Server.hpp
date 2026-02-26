@@ -36,6 +36,7 @@ class Server
         void processLine(Client &client, const std::string &line);
         void enableWrite(int fd);
         void disableWrite(int fd);
+        std::vector<struct pollfd>::iterator findPollfd(int fd);
 };
 
 #endif

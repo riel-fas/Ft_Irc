@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../../includes/Server.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
@@ -19,7 +19,18 @@ Server::Server(int port, const std::string &password)
 
 Server::~Server()
 {
-//to be configured
+    // Close all client connections
+    std::map<int, Client *>::iterator it;
+    for (it = clients.begin(); it != clients.end(); ++it)
+    {
+        close(it->first);
+        delete it->second;
+    }
+    clients.clear();
+
+    // Close the listening socket
+    if (_serverFd != -1)
+        close(_serverFd);
 }
 
 //--5 steps to setup a server socket

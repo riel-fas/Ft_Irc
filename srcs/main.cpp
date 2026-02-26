@@ -2,7 +2,8 @@
 #include <csignal>
 #include <cstdlib>
 #include <cerrno>
-#include "Server.hpp"
+#include "../includes/Server.hpp"
+
 
 bool g_running = true;
 
