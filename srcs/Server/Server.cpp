@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+
 extern bool g_running;
 
 Server::Server(int port, const std::string &password)

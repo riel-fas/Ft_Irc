@@ -18,6 +18,7 @@ Client::Client(int fd)
 {
 }
 
+
 Client::~Client()
 {
     // fd is closed by Server before deleting Client

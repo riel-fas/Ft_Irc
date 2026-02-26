@@ -3,8 +3,14 @@ NAME = ircserv
 C = c++
 FLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRCS =
-HEADER = 
+SRCS =	srcs/main.cpp \
+		srcs/Client.cpp \
+		srcs/Server/Server.cpp \
+		srcs/Server/Server_utils.cpp \
+		srcs/Server/Server_Client.cpp \
+		srcs/Server/Read_Write.cpp
+
+HEADER = Client.cpp Server.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
