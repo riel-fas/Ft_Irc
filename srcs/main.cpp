@@ -5,6 +5,7 @@
 #include "../includes/Server.hpp"
 
 
+
 bool g_running = true;
 
 static void signal_handler(int sig)
