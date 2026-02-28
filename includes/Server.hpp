@@ -40,6 +40,16 @@ class Server
         std::vector<struct pollfd>::iterator findPollfd(int fd);
 
         Message parseMessage(const std::string &line);
+
+        // auth commands
+        void handlePass(Client &client, const Message &msg);
+        void handleNick(Client &client, const Message &msg);
+        void handleUser(Client &client, const Message &msg);
+        void handlePing(Client &client, const Message &msg);
+        void sendWelcome(Client &client);
+
+        // utility
+        std::string makeReply(int code, const std::string &target, const std::string &msg);
 };
 
 #endif

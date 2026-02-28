@@ -96,15 +96,21 @@ void Server::processBuffer(Client &client)
 void Server::processLine(Client &client, const std::string &line)
 {
     Message msg = parseMessage(line);
+    if (msg.command.empty())
+        return;
 
-    std::cout << "[fd=" << client.fd << "]" << " CMD=" << msg.command;
-    for (size_t i = 0; i < msg.params.size(); i++)
-        std::cout << " P" << i << "=" << msg.params[i];
-    std::cout << std::endl;
-    // YABENMAN!! plug real dispatcher here
+    if      (msg.command == "PASS") handlePass(client, msg);
+    else if (msg.command == "NICK") handleNick(client, msg);
+    else if (msg.command == "USER") handleUser(client, msg);
+    else if (msg.command == "PING") handlePing(client, msg);
+    else if (msg.command == "QUIT") disconnectClient(client.fd);
+    else if (!client.registered)
+        sendToClient(client.fd, makeReply(451, "*", "You have not registered") );
+    // ZBEN_OMA!! add JOIN, PRIVMSG, MODE etc here
     // ZBEN_OMA!! plug command handlers here
-    (void)client;
 }
+
+
 void Server::disconnectClient(int fd)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);

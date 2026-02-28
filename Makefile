@@ -9,7 +9,8 @@ SRCS =	srcs/main.cpp \
 		srcs/Server/Server_utils.cpp \
 		srcs/Server/Server_Client.cpp \
 		srcs/Server/Read_Write.cpp \
-		srcs/Server/Parser.cpp
+		srcs/Server/Parser.cpp \
+		srcs/Server/Cmd_Auth.cpp 
 
 HEADER = Client.cpp Server.cpp
 
