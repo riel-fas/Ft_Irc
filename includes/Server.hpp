@@ -39,7 +39,7 @@ class Server
         void disableWrite(int fd);
         std::vector<struct pollfd>::iterator findPollfd(int fd);
 
-        Message Server::parseMessage(const std::string &line);
+        Message parseMessage(const std::string &line);
 };
 
 #endif

@@ -50,20 +50,47 @@ void Server::acceptClient()
 }
 
 
-void    Server::processBuffer(Client &client)
+//old_version
+// void    Server::processBuffer(Client &client)
+// {
+//     std::string &buf  = client.recvbuff;
+//     while (true)
+//     {
+//         std::string::size_type pos = buf.find("\r\n");
+//         if (pos == std::string::npos)
+//             break; // No complete line yet
+
+//         std::string line = buf.substr(0, pos);
+//         buf = buf.substr(pos + 2); // Remove processed line from buffer
+//         if(!line.empty())
+//             processLine(client, line);
+//             //to be donex
+//     }
+// }
+
+
+//handles \rand \n
+void Server::processBuffer(Client &client)
 {
-    std::string &buf  = client.recvbuff;
+    std::string &buf = client.recvbuff;
     while (true)
     {
         std::string::size_type pos = buf.find("\r\n");
         if (pos == std::string::npos)
-            break; // No complete line yet
+            pos = buf.find("\n");  // Also accept just \n
+            
+        if (pos == std::string::npos)
+            break;
 
         std::string line = buf.substr(0, pos);
-        buf = buf.substr(pos + 2); // Remove processed line from buffer
-        if(!line.empty())
+        // Remove the delimiter(s)
+        if (buf[pos] == '\r' && pos + 1 < buf.size() && buf[pos + 1] == '\n')
+            buf = buf.substr(pos + 2);
+        else
+            buf = buf.substr(pos + 1);
+            
+        if (!line.empty())
             processLine(client, line);
-            //to be donex
     }
 }
 
