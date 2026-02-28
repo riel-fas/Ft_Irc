@@ -21,10 +21,12 @@ static int validate_port(const char *str)
 
     if (errno != 0 || end == str || *end != '\0')
         return -1;
-    if (val == 0 || val == 20 || val == 21 || val == 22 || val == 23 || val == 25 || val == 53 || val == 57 
-            || val == 67 || val == 68 || val == 80 || val == 110 || val == 123 || val == 137 || val == 139 
-            || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
-        return -1;
+    // if (val == 0 || val == 20 || val == 21 || val == 22 || val == 23 || val == 25 || val == 53 || val == 57 
+    //         || val == 67 || val == 68 || val == 80 || val == 110 || val == 123 || val == 137 || val == 139 
+    //         || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
+    //     return -1;
+    if (val < 1 || val > 65535)
+        return -1; //its not required in subj, to block known ports [until final stage discussion]
     return static_cast<int>(val);
 }
 //we used strol instead of atoi because 
