@@ -5,7 +5,6 @@
 #include "../includes/Server.hpp"
 
 
-
 bool g_running = true;
 
 static void signal_handler(int sig)
@@ -31,7 +30,6 @@ static int validate_port(const char *str)
 //we used strol instead of atoi because 
 //it provides better error handling 
 //and can detect invalid input more robustly
-
 int main(int ac, char **av)
 {
     if (ac != 3)
@@ -52,13 +50,10 @@ int main(int ac, char **av)
         std::cerr << "Password cannot be empty" << std::endl;
         return 1;
     }
-
     //ctrl/c + ctrl/backslash + broken pipe
     signal(SIGINT,  signal_handler);  
     signal(SIGQUIT, signal_handler);  
     signal(SIGPIPE, SIG_IGN);         
-
-
     try
     {
         Server server(port, password);
@@ -71,8 +66,4 @@ int main(int ac, char **av)
 
     }
     return 0;
-
-    //and setting the server 
 }
-
-//testing

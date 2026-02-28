@@ -20,12 +20,10 @@ Message Server::parseMessage(const std::string &line)
         msg.prefix = line.substr(pos, prefix_end - pos);
         pos = prefix_end + 1;
     }
-
     std::string::size_type command_end = line.find(' ', pos);
     if (command_end == std::string::npos)
         command_end = end;
     msg.command = line.substr(pos, command_end - pos);
-
     //uppercase the command from  nick to NICK
     for (std::string::size_type i = 0; i < msg.command.size(); i++)
         msg.command[i] = std::toupper((unsigned char)msg.command[i]);
@@ -33,7 +31,8 @@ Message Server::parseMessage(const std::string &line)
     if (command_end >= end)
         return msg;
     pos = command_end + 1;
-
+    while(pos < end && line[pos] == ' ')
+        pos++; //skip extra spaces
     while (pos < end)
     {
         if (line[pos] == ':')

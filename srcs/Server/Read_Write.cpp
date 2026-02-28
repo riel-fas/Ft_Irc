@@ -25,23 +25,19 @@ void Server::handleRead(int fd)
     ssize_t bytes  = recv(fd, buff, sizeof(buff) - 1 , 0);
     if(bytes == 0)
     {
-        //a disconnect method will be implemented later
         disconnectClient(fd);
         return ;
     }
-
     if(bytes < 0)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;     // Non-blocking: no data available right now so its not an error
+            return;
         std::cerr << "recv() error on fd " << fd << ": " << strerror(errno) << std::endl;
         disconnectClient(fd);
         return;
     }
-
     buff[bytes] = '\0';
     clients[fd]->recvbuff.append(buff, bytes);
-
     // Now scan the buffer for complete lines
     processBuffer(*clients[fd]);
 }
@@ -55,7 +51,6 @@ void    Server::handleWrite(int fd)
         return;
 
     ssize_t sent = send(fd, client->sendQueue.c_str(), client->sendQueue.size(), 0);
-
     if (sent < 0)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -63,14 +58,11 @@ void    Server::handleWrite(int fd)
         disconnectClient(fd);
         return;
     }
-
     //remove the bytes that were actually sent
     client->sendQueue.erase(0, sent);
-
     //if queue is now empty, remove POLLOUT flag
     //without this, poll() would wake up constantly (100% CPU spin)
     //so its needed to disable write events when we have nothing to send
     if (client->sendQueue.empty())
         disableWrite(fd);
 }
-//testing

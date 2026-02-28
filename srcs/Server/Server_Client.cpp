@@ -33,20 +33,17 @@ void Server::acceptClient()
         close(newFd);
         return;
     }
-
     struct pollfd pfd;
     pfd.fd      = newFd;
     pfd.events  = POLLIN;
     pfd.revents = 0;
     _fds.push_back(pfd);
-
     // Create Client object and store it
     Client *client   = new Client(newFd);
     client->hostname = inet_ntoa(clientAddr.sin_addr);
     clients[newFd]   = client;
 
-    std::cout << "New connection from " << client->hostname
-              << " (fd=" << newFd << ")" << std::endl;
+    std::cout << "New connection from " << client->hostname << " (fd=" << newFd << ")" << std::endl;
 }
 
 
@@ -70,7 +67,7 @@ void Server::acceptClient()
 // }
 
 
-//handles \rand \n
+//handles \r and \n
 void Server::processBuffer(Client &client)
 {
     std::string &buf = client.recvbuff;
@@ -104,7 +101,6 @@ void Server::processLine(Client &client, const std::string &line)
     for (size_t i = 0; i < msg.params.size(); i++)
         std::cout << " P" << i << "=" << msg.params[i];
     std::cout << std::endl;
-
     // YABENMAN!! plug real dispatcher here
     // ZBEN_OMA!! plug command handlers here
     (void)client;
@@ -141,5 +137,3 @@ void Server::sendToClient(int fd, const std::string &msg)
     //signal poll() that we have data to write
     enableWrite(fd);
 }
-
-//testing

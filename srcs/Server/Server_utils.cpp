@@ -11,7 +11,6 @@
 #include <arpa/inet.h>
 
 
-
 std::vector<struct pollfd>::iterator Server::findPollfd(int fd)
 {
     std::vector<struct pollfd>::iterator it = _fds.begin();
@@ -38,5 +37,3 @@ void Server::disableWrite(int fd)
     if (it != _fds.end())
         it->events &= ~POLLOUT;  //bitwise AND NOT — removes POLLOUT, keeps POLLIN
 }
-
-//testing
