@@ -70,15 +70,17 @@ void    Server::processBuffer(Client &client)
 
 void Server::processLine(Client &client, const std::string &line)
 {
-    std::cout << "[fd=" << client.fd << "] Received: " << line << std::endl;
+    Message msg = parseMessage(line);
 
-    // YABENMAN !!! >>> replaces this with the real IRC message parser
-    // ZBEN_OMA !!! >>> replaces the dispatch with the command handlers
+    std::cout << "[fd=" << client.fd << "]" << " CMD=" << msg.command;
+    for (size_t i = 0; i < msg.params.size(); i++)
+        std::cout << " P" << i << "=" << msg.params[i];
+    std::cout << std::endl;
 
-    //sendToClient(client.fd, "ECHO: " + line + "\r\n");
+    // YABENMAN!! plug real dispatcher here
+    // ZBEN_OMA!! plug command handlers here
     (void)client;
 }
-
 void Server::disconnectClient(int fd)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);

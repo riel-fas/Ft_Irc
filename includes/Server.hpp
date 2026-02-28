@@ -6,7 +6,7 @@
 #include <map>
 #include <poll.h>
 #include "Client.hpp"
-
+#include "Message.hpp"
 
 class Server
 {
@@ -38,6 +38,8 @@ class Server
         void enableWrite(int fd);
         void disableWrite(int fd);
         std::vector<struct pollfd>::iterator findPollfd(int fd);
+
+        Message Server::parseMessage(const std::string &line);
 };
 
 #endif
