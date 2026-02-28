@@ -10,7 +10,6 @@ bool g_running = true;
 
 static void signal_handler(int sig)
 {
-    // suppresses <-Wextra> flag  unused parameter warning
     (void)sig;        
     g_running = false;
 }
@@ -20,13 +19,12 @@ static int validate_port(const char *str)
     char *end;
     errno = 0;
     long val = strtol(str, &end, 10);
-    //i think a problem will occure if we tested using a known port 
-    //0 - 20 - 21 - 22 - 23 - 25 - 53 - 57 
-    //- 67/68 - 80 - 110 - 123 - 137/139 
-    //- 143 - 161 - 443 - 445 - 631 
+
     if (errno != 0 || end == str || *end != '\0')
         return -1;
-    if (val < 1024 || val > 65535)
+    if (val == 0 || val == 20 || val == 21 || val == 22 || val == 23 || val == 25 || val == 53 || val == 57 
+            || val == 67 || val == 68 || val == 80 || val == 110 || val == 123 || val == 137 || val == 139 
+            || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
         return -1;
     return static_cast<int>(val);
 }

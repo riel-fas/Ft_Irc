@@ -7,7 +7,6 @@
 class Client
 {
     public:
-        //needed for network
         int fd;
         std::string recvbuff;
         std::string sendQueue;
@@ -22,13 +21,8 @@ class Client
         bool userOk;
         bool registered;
 
-
-
-        //contructor and destructor
         Client(int fd);
         ~Client();
-
-
 
     private:
         //prevent copying ;) each client have its own fd so copying makes no sense
@@ -41,5 +35,3 @@ class Client
 #endif
 
 //PS: no need to respect the canonical form no mention to it in the subject
-
-//testing

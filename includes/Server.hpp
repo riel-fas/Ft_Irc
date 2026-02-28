@@ -28,8 +28,8 @@ class Server
         std::vector<struct pollfd> _fds;
         std::string                _password;
 
-        void setupSocket();//done
-        void acceptClient();//done
+        void setupSocket();
+        void acceptClient();
         void handleRead(int fd);
         void handleWrite(int fd);
         void disconnectClient(int fd);
