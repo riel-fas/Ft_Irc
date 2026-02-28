@@ -74,7 +74,6 @@ void Server::setupSocket()
     pfd.events  = POLLIN;
     pfd.revents = 0;
     _fds.push_back(pfd);
-
     std::cout <<"Server is listening on port " << _port << std::endl;
 }
 
@@ -100,7 +99,6 @@ void Server::run()
             else
                 throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
         }
-
         for (size_t x = 0; x < _fds.size(); ++x)
         {
             int  fd      = _fds[x].fd;
@@ -128,5 +126,3 @@ void Server::run()
         }
     }
 }
-
-//testing

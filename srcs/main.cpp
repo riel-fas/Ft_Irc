@@ -5,7 +5,6 @@
 #include "../includes/Server.hpp"
 
 
-
 bool g_running = true;
 
 static void signal_handler(int sig)
@@ -22,16 +21,17 @@ static int validate_port(const char *str)
 
     if (errno != 0 || end == str || *end != '\0')
         return -1;
-    if (val == 0 || val == 20 || val == 21 || val == 22 || val == 23 || val == 25 || val == 53 || val == 57 
-            || val == 67 || val == 68 || val == 80 || val == 110 || val == 123 || val == 137 || val == 139 
-            || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
-        return -1;
+    // if (val == 0 || val == 20 || val == 21 || val == 22 || val == 23 || val == 25 || val == 53 || val == 57 
+    //         || val == 67 || val == 68 || val == 80 || val == 110 || val == 123 || val == 137 || val == 139 
+    //         || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
+    //     return -1;
+    if (val < 1 || val > 65535)
+        return -1; //its not required in subj, to block known ports [until final stage discussion]
     return static_cast<int>(val);
 }
 //we used strol instead of atoi because 
 //it provides better error handling 
 //and can detect invalid input more robustly
-
 int main(int ac, char **av)
 {
     if (ac != 3)
@@ -52,13 +52,10 @@ int main(int ac, char **av)
         std::cerr << "Password cannot be empty" << std::endl;
         return 1;
     }
-
     //ctrl/c + ctrl/backslash + broken pipe
     signal(SIGINT,  signal_handler);  
     signal(SIGQUIT, signal_handler);  
     signal(SIGPIPE, SIG_IGN);         
-
-
     try
     {
         Server server(port, password);
@@ -71,8 +68,4 @@ int main(int ac, char **av)
 
     }
     return 0;
-
-    //and setting the server 
 }
-
-//testing
