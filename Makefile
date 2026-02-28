@@ -8,7 +8,8 @@ SRCS =	srcs/main.cpp \
 		srcs/Server/Server.cpp \
 		srcs/Server/Server_utils.cpp \
 		srcs/Server/Server_Client.cpp \
-		srcs/Server/Read_Write.cpp
+		srcs/Server/Read_Write.cpp \
+		srcs/Server/Parser.cpp
 
 HEADER = Client.cpp Server.cpp
 

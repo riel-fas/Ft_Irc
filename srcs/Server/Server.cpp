@@ -44,7 +44,7 @@ void Server::setupSocket()
 {
     //socket creates an endpoint for commu. it return an int fd
     //the AF_NET is for ipv4 //type of socket //protocol (0 is the default one)
-    Server::_serverFd = socket(AF_INET, SOCK_STREAM, 0);
+    _serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if(_serverFd < 0)
         throw std::runtime_error("Failed to create socket: " + std::string(strerror(errno)));        
 
