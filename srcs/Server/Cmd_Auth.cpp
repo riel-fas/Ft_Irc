@@ -67,9 +67,9 @@ void Server::handleNick(Client &client, const Message &msg)
     client.nick  = newNick;
     client.nickOk = true;
 
-    // if already registered — nick change broadcast
-    // YABENMAN!! broadcast :old!u@h NICK newnick to shared channels
-    // check if registration now complete
+    //if already registered — nick change broadcast
+    //YABENMAN!! broadcast :old!u@h NICK newnick to shared channels
+    //check if registration now complete
     if (client.passOk && client.nickOk && client.userOk)
     {
         client.registered = true;
