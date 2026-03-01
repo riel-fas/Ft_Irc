@@ -32,7 +32,7 @@ Message Server::parseMessage(const std::string &line)
         return msg;
     pos = command_end + 1;
     while(pos < end && line[pos] == ' ')
-        pos++; //skip extra spaces
+        pos++; //skip extra spaces if there was
     while (pos < end)
     {
         if (line[pos] == ':')

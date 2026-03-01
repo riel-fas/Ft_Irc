@@ -29,6 +29,15 @@ static int validate_port(const char *str)
         return -1; //its not required in subj, to block known ports [until final stage discussion]
     return static_cast<int>(val);
 }
+
+
+//for leaks check
+void ll()
+{
+    system("leaks -q ircserv");
+}
+
+
 //we used strol instead of atoi because 
 //it provides better error handling 
 //and can detect invalid input more robustly
@@ -52,6 +61,7 @@ int main(int ac, char **av)
         std::cerr << "Password cannot be empty" << std::endl;
         return 1;
     }
+    atexit(ll);
     //ctrl/c + ctrl/backslash + broken pipe
     signal(SIGINT,  signal_handler);  
     signal(SIGQUIT, signal_handler);  

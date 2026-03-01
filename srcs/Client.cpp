@@ -20,6 +20,7 @@ Client::Client(int fd)
 
 Client::~Client()
 {
-    // fd is closed by Server before deleting Client
-    // nothing to free here yet
+    //fd is closed by Server before deleting Client
+    //nothing to free here yet
+    //will be needed later
 }
