@@ -38,10 +38,9 @@ void Server::handleRead(int fd)
     }
     buff[bytes] = '\0';
     clients[fd]->recvbuff.append(buff, bytes);
-    // Now scan the buffer for complete lines
+    //scan for the buffer
     processBuffer(*clients[fd]);
 }
-
 
 
 void    Server::handleWrite(int fd)

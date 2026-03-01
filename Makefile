@@ -1,6 +1,7 @@
 NAME = ircserv
 
 C = c++
+
 FLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRCS =	srcs/main.cpp \
@@ -52,3 +53,6 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+
+#i will add later to the makefile a tldr or a tuto on how to run and use this project so the user wont have problems testing it

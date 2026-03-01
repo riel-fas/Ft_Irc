@@ -93,7 +93,7 @@ void Server::handleUser(Client &client, const Message &msg)
     client.user     = msg.params[0];
     client.realname = msg.params[3];
     client.userOk   = true;
-    // check if registration now complete
+    //check if registration now complete
     if (client.passOk && client.nickOk && client.userOk)
     {
         client.registered = true;

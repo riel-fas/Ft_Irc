@@ -10,9 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
-
-//called when POLLIN fires on the server fd
+//called when POLLIN (for more infos check signals !!!) fires on the server fd
 void Server::acceptClient()
 {
     struct sockaddr_in clientAddr;
@@ -47,26 +45,6 @@ void Server::acceptClient()
 }
 
 
-//old_version
-//still in testing
-// void    Server::processBuffer(Client &client)
-// {
-//     std::string &buf  = client.recvbuff;
-//     while (true)
-//     {
-//         std::string::size_type pos = buf.find("\r\n");
-//         if (pos == std::string::npos)
-//             break; // No complete line yet
-
-//         std::string line = buf.substr(0, pos);
-//         buf = buf.substr(pos + 2); // Remove processed line from buffer
-//         if(!line.empty())
-//             processLine(client, line);
-//             //to be donex
-//     }
-// }
-
-
 //handles \r and \n
 void Server::processBuffer(Client &client)
 {
@@ -92,7 +70,6 @@ void Server::processBuffer(Client &client)
     }
 }
 
-
 void Server::processLine(Client &client, const std::string &line)
 {
     Message msg = parseMessage(line);
@@ -109,7 +86,6 @@ void Server::processLine(Client &client, const std::string &line)
     // ZBEN_OMA!! add JOIN, PRIVMSG, MODE etc here
     // ZBEN_OMA!! plug command handlers here
 }
-
 
 void Server::disconnectClient(int fd)
 {
@@ -143,3 +119,24 @@ void Server::sendToClient(int fd, const std::string &msg)
     //signal poll() that we have data to write
     enableWrite(fd);
 }
+
+
+/////////////////////////////////////////////////////////
+//old_version of process buffer
+//still in testing
+// void    Server::processBuffer(Client &client)
+// {
+//     std::string &buf  = client.recvbuff;
+//     while (true)
+//     {
+//         std::string::size_type pos = buf.find("\r\n");
+//         if (pos == std::string::npos)
+//             break; // No complete line yet
+//         std::string line = buf.substr(0, pos);
+//         buf = buf.substr(pos + 2); // Remove processed line from buffer
+//         if(!line.empty())
+//             processLine(client, line);
+//             //to be donex
+//     }
+// }
+///////////////////keep in case of a change////////////////////

@@ -42,17 +42,15 @@ Server::~Server()
 //5. handle client communication(using fcntl >> only for macos)
 void Server::setupSocket()
 {
-    //socket creates an endpoint for commu. it return an int fd
+    //socket creates an endpoint for communication  it return an int fd
     //the AF_NET is for ipv4 //type of socket //protocol (0 is the default one)
     _serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if(_serverFd < 0)
         throw std::runtime_error("Failed to create socket: " + std::string(strerror(errno)));        
-
     //it get and set options in the socket
     int opt  = 1;
     if(setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
         throw std::runtime_error(std::string("setsockopt() failed: ") + strerror(errno));
-
     struct sockaddr_in server_addr;
     std::memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family      = AF_INET;
@@ -61,14 +59,10 @@ void Server::setupSocket()
     //bind a name to a socket
     if(bind(_serverFd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
         throw std::runtime_error(std::string("bind() failed: ") + strerror(errno));
-
     if(listen(_serverFd, SOMAXCONN) < 0)
         throw std::runtime_error(std::string("listen() failed: ") + strerror(errno));
-
     if(fcntl(_serverFd, F_SETFL, O_NONBLOCK) < 0)
         throw std::runtime_error(std::string("fcntl() failed: ") + strerror(errno));
-
-    //Added to poll watchlist
     struct pollfd pfd;
     pfd.fd      = _serverFd ;
     pfd.events  = POLLIN;

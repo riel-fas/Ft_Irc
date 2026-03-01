@@ -10,7 +10,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 std::vector<struct pollfd>::iterator Server::findPollfd(int fd)
 {
     std::vector<struct pollfd>::iterator it = _fds.begin();
@@ -22,14 +21,12 @@ std::vector<struct pollfd>::iterator Server::findPollfd(int fd)
     return _fds.end();
 }
 
-
 void Server::enableWrite(int fd)
 {
     std::vector<struct pollfd>::iterator it = findPollfd(fd);
     if (it != _fds.end())
         it->events |= POLLOUT;   //bitwise OR — adds POLLOUT, keeps POLLIN
 }
-
 
 void Server::disableWrite(int fd)
 {
