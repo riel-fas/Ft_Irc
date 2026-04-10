@@ -38,6 +38,16 @@ void Server::handleRead(int fd)
     }
     buff[bytes] = '\0';
     clients[fd]->recvbuff.append(buff, bytes);
+
+    // Limit buffer size to prevent memory exhaustion / OOM attacks
+    if (clients[fd]->recvbuff.size() > 4096)
+    {
+        std::string err = "ERROR :Closing Link: Buffer limit exceeded\r\n";
+        send(fd, err.c_str(), err.size(), 0);
+        disconnectClient(fd);
+        return;
+    }
+
     //scan for the buffer
     processBuffer(*clients[fd]);
 }

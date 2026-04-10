@@ -48,9 +48,16 @@ void Server::acceptClient()
 //handles \r and \n
 void Server::processBuffer(Client &client)
 {
-    std::string &buf = client.recvbuff;
+    int clientFd = client.fd;
     while (true)
     {
+        // check if client was disconnected in a previous command
+        std::map<int, Client *>::iterator it = clients.find(clientFd);
+        if (it == clients.end())
+            break;
+
+        std::string &buf = client.recvbuff;
+
         std::string::size_type pos = buf.find("\r\n");
         if (pos == std::string::npos)
             pos = buf.find("\n");  // Also accept just \n
