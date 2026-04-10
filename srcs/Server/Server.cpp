@@ -28,6 +28,21 @@ Server::~Server()
         delete it->second;
     }
     clients.clear();
+    nickMap.clear();
+
+
+    // Clean up channels
+    std::map<std::string, Channel *>::iterator cit;
+    for (cit = channelMap.begin(); cit != channelMap.end(); ++cit)
+    {
+        delete cit->second;
+    }
+    channelMap.clear();
+
+
+
+
+
 
     // Close the listening socket
     if (_serverFd != -1)

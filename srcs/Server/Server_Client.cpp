@@ -10,11 +10,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+
 //called when POLLIN (for more infos check signals !!!) fires on the server fd
 void Server::acceptClient()
 {
     struct sockaddr_in clientAddr;
     socklen_t len = sizeof(clientAddr);
+
 
     int newFd = accept(_serverFd, (struct sockaddr *)&clientAddr, &len);
     if (newFd < 0)
@@ -41,8 +43,11 @@ void Server::acceptClient()
     client->hostname = inet_ntoa(clientAddr.sin_addr);
     clients[newFd]   = client;
 
+
     std::cout << "New connection from " << client->hostname << " (fd=" << newFd << ")" << std::endl;
 }
+
+
 
 
 //handles \r and \n
@@ -61,9 +66,10 @@ void Server::processBuffer(Client &client)
         std::string::size_type pos = buf.find("\r\n");
         if (pos == std::string::npos)
             pos = buf.find("\n");  // Also accept just \n
-            
+           
         if (pos == std::string::npos)
             break;
+
 
         std::string line = buf.substr(0, pos);
         // Remove the delimiter(s)
@@ -71,17 +77,19 @@ void Server::processBuffer(Client &client)
             buf = buf.substr(pos + 2);
         else
             buf = buf.substr(pos + 1);
-            
+           
         if (!line.empty())
             processLine(client, line);
     }
 }
+
 
 void Server::processLine(Client &client, const std::string &line)
 {
     Message msg = parseMessage(line);
     if (msg.command.empty())
         return;
+
 
     if      (msg.command == "PASS") handlePass(client, msg);
     else if (msg.command == "NICK") handleNick(client, msg);
@@ -94,17 +102,42 @@ void Server::processLine(Client &client, const std::string &line)
     // ZBEN_OMA!! plug command handlers here
 }
 
+
 void Server::disconnectClient(int fd)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);
     if (it == clients.end())
         return;  // already cleaned up
 
+
     std::cout << "Client disconnected (fd=" << fd << ", nick="
               << it->second->nick << ")" << std::endl;
 
-    //YABENMAN remove nick from nickMap
-    //ZBEN_OMA broadcast QUIT to all channels the client was in
+
+    // Remove from nickMap
+    if (!it->second->nick.empty())
+        nickMap.erase(toLower(it->second->nick));
+
+
+    // Remove from all channels
+    std::map<std::string, Channel *>::iterator cit = channelMap.begin();
+    while (cit != channelMap.end())
+    {
+        Channel *chan = cit->second;
+        if (chan->isMember(fd))
+        {
+            chan->removeMember(fd);
+            // ZBEN_OMA broadcast QUIT to shared channels will be added in Phase 3
+            if (chan->getMemberCount() == 0)
+            {
+                delete chan;
+                channelMap.erase(cit++);
+                continue;
+            }
+        }
+        ++cit;
+    }
+
 
     // Remove from _fds vector
     std::vector<struct pollfd>::iterator pIt = findPollfd(fd);
@@ -116,16 +149,20 @@ void Server::disconnectClient(int fd)
     clients.erase(it);
 }
 
+
 void Server::sendToClient(int fd, const std::string &msg)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);
     if (it == clients.end())
         return;  //client already disconnected
 
+
     it->second->sendQueue += msg;
     //signal poll() that we have data to write
     enableWrite(fd);
 }
+
+
 
 
 /////////////////////////////////////////////////////////
@@ -147,3 +184,6 @@ void Server::sendToClient(int fd, const std::string &msg)
 //     }
 // }
 ///////////////////keep in case of a change////////////////////
+
+
+
