@@ -1,20 +1,8 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: Gemini <ai@42.fr>                          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/04/10                          #+#    #+#              #
-#    Updated: 2026/04/10                          ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+NAME = ircserv
 
-NAME        = ircserv
-CC          = c++
-FLAGS       = -Wall -Wextra -Werror -std=c++98 -I includes
+C = c++
+FLAGS = -Wall -Wextra -Werror -std=c++98
 
-# Chemins des sources
 SRCS        = srcs/main.cpp \
               srcs/Client.cpp \
               srcs/Channel.cpp \
@@ -30,45 +18,60 @@ HEADER      = includes/Client.hpp \
               includes/Message.hpp \
               includes/Channel.hpp
 
-OBJS        = $(SRCS:.cpp=.o)
 
-# Couleurs pour le terminal
-GREEN       = \033[0;32m
-CYAN        = \033[0;36m
-YELLOW      = \033[1;33m
-RED         = \033[0;31m
-RESET       = \033[0m
+OBJS = $(SRCS:.cpp=.o)
 
-# --- RÈGLES ---
+# Colors
+GREEN  = \033[0;32m
+CYAN   = \033[0;36m
+YELLOW = \033[1;33m
+RED    = \033[0;31m
+BOLD   = \033[1m
+PURPLE = \033[0;35m
+RESET  = \033[0m
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
 	@echo "$(GREEN):::::::::: $(CYAN):::::::::::           $(YELLOW)::::::::::: :::::::::   :::::::: $(RESET)"
-	@echo "$(GREEN):+:             :+:                   $(CYAN):+:     $(YELLOW):+:    :+: :+:    :+:$(RESET)"
-	@echo "$(GREEN)+:+             +:+                   $(CYAN)+:+     $(YELLOW)+:+    +:+ +:+       $(RESET)"
+	@echo "$(GREEN):+:            :+:                   $(CYAN):+:     $(YELLOW):+:    :+: :+:    :+:$(RESET)"
+	@echo "$(GREEN)+:+            +:+                   $(CYAN)+:+     $(YELLOW)+:+    +:+ +:+       $(RESET)"
 	@echo "$(GREEN):#::+::#       +#+                   $(CYAN)+#+     $(YELLOW)+#++:++#:  +#+       $(RESET)"
-	@echo "$(GREEN)+#+             +#+                   $(CYAN)+#+     $(YELLOW)+#+    +#+ +#+       $(RESET)"
-	@echo "$(GREEN)#+#             #+#                   $(CYAN)#+#     $(YELLOW)#+#    #+# #+#    #+#$(RESET)"
-	@echo "$(GREEN)###             ###    ########## $(CYAN)########### $(YELLOW)###    ###  ######## $(RESET)"
+	@echo "$(GREEN)+#+            +#+                   $(CYAN)+#+     $(YELLOW)+#+    +#+ +#+       $(RESET)"
+	@echo "$(GREEN)#+#            #+#                   $(CYAN)#+#     $(YELLOW)#+#    #+# #+#    #+#$(RESET)"
+	@echo "$(GREEN)###            ###    ########## $(CYAN)########### $(YELLOW)###    ###  ######## $(RESET)"
 	@echo "$(RESET)"
-	$(CC) $(FLAGS) -o $(NAME) $(OBJS)
-	@echo "$(GREEN)✓ Compilation terminée avec succès !$(RESET)"
+	$(C) $(FLAGS) -o $(NAME) $(OBJS)
+	@echo "$(GREEN)✓ Compilation completed successfully!$(RESET)"
+	@echo ""
+	@echo "$(BOLD)$(PURPLE)╔══════════════════════════════════════════════╗$(RESET)"
+	@echo "$(BOLD)$(PURPLE)║           HOW TO RUN ft_irc                 ║$(RESET)"
+	@echo "$(BOLD)$(PURPLE)╚══════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+	@echo "  $(CYAN)Usage:$(RESET)    $(BOLD)./$(NAME) <port> <password>$(RESET)"
+	@echo ""
+	@echo "  $(CYAN)Example:$(RESET)  $(YELLOW)./$(NAME) 6667 mypassword$(RESET)"
+	@echo ""
+	@echo "  $(CYAN)Connect:$(RESET)  HexChat → 127.0.0.1 / port 6667 / password"
+	@echo "            nc -C 127.0.0.1 6667"
+	@echo ""
+	@echo "  $(CYAN)Port:$(RESET)     Must be between 1024 and 65535"
+	@echo "  $(CYAN)Password:$(RESET) Cannot be empty"
+	@echo ""
 
-# Règle générique pour les fichiers objets
-# Dépend des .cpp ET des .hpp pour recompiler si un header change
-%.o: %.cpp $(HEADER)
+%.o : %.cpp $(HEADER)
 	@echo "$(CYAN)Compiling $<...$(RESET)"
-	@$(CC) $(FLAGS) -c $< -o $@
+	$(C) $(FLAGS) -c $< -o $@ 
 
 clean:
-	@echo "$(RED)Nettoyage des objets...$(RESET)"
-	@rm -f $(OBJS)
+	@echo "$(RED)Cleaning object files...$(RESET)"
+	rm -f $(OBJS)
 
 fclean: clean
-	@echo "$(RED)Suppression de l'exécutable $(NAME)...$(RESET)"
-	@rm -f $(NAME)
+	@echo "$(RED)Removing executable...$(RESET)"
+	rm -f $(NAME)
 
 re: fclean all
 
 .PHONY: all clean fclean re
+

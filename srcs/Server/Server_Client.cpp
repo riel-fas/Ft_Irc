@@ -96,8 +96,13 @@ void Server::processLine(Client &client, const std::string &line)
     else if (msg.command == "USER") handleUser(client, msg);
     else if (msg.command == "PING") handlePing(client, msg);
     else if (msg.command == "QUIT") disconnectClient(client.fd);
-    else if (!client.registered)
-        sendToClient(client.fd, makeReply(451, "*", "You have not registered") );
+    else
+    {
+        if (!client.registered)
+            sendToClient(client.fd, makeReply(451, "*", "You have not registered"));
+        else
+            sendToClient(client.fd, makeReply(421, client.nick, msg.command + " :Unknown command"));
+    }
     // ZBEN_OMA!! add JOIN, PRIVMSG, MODE etc here
     // ZBEN_OMA!! plug command handlers here
 }

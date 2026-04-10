@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 #include <sstream>
 #include <iostream>
+#include <sys/socket.h>
 
 
 //builds a proper IRC numeric reply
@@ -31,7 +32,8 @@ void Server::handlePass(Client &client, const Message &msg)
     }
     if (msg.params[0] != _password)
     {
-        sendToClient(client.fd, makeReply(464, client.nick, "Password incorrect"));
+        std::string err = makeReply(464, client.nick, "Password incorrect");
+        send(client.fd, err.c_str(), err.size(), 0);
         disconnectClient(client.fd);
         return;
     }
@@ -65,6 +67,13 @@ void Server::handleNick(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(432, newNick, "Erroneous nickname"));
         return;
     }
+    char first = newNick[0];
+    if (!isalpha(first) && first != '_' && first != '[' && first != ']'
+        && first != '{' && first != '}' && first != '|' && first != '\\')
+    {
+        sendToClient(client.fd, makeReply(432, newNick, "Erroneous nickname"));
+        return;
+    }
     for (size_t i = 0; i < newNick.size(); i++)
     {
         char c = newNick[i];
@@ -76,7 +85,8 @@ void Server::handleNick(Client &client, const Message &msg)
         }
     }
     // Check if nickname is already in use
-    if (nickMap.count(toLower(newNick)))
+    std::map<std::string, Client *>::iterator it = nickMap.find(toLower(newNick));
+    if (it != nickMap.end() && it->second != &client)
     {
         sendToClient(client.fd, makeReply(433, newNick, "Nickname is already in use"));
         return;
@@ -102,7 +112,7 @@ void Server::handleNick(Client &client, const Message &msg)
         // YABENMAN!! broadcast to shared channels will be added in Phase 3
     }
     //check if registration now complete
-    if (client.passOk && client.nickOk && client.userOk)
+    else if (client.passOk && client.nickOk && client.userOk)
     {
         client.registered = true;
         sendWelcome(client);
