@@ -100,15 +100,32 @@ void Server::run()
 
             if (revents == 0)
                 continue;   // nothing happened on this fd
-            if (fd == _serverFd && (revents & POLLIN))
+            if (fd == _serverFd)
             {
-                acceptClient();
+                if (revents & POLLIN)
+                    acceptClient();
                 continue;
             }
+
             if (revents & POLLIN)
                 handleRead(fd);
+            //added fix for the segfault caused when a user get disconnected 
+            //it get deleted it call the handle write 
+
+            if (clients.find(fd) == clients.end())
+            {
+                --x;
+                continue;
+            }
+
             if (revents & POLLOUT)
                 handleWrite(fd);
+
+            if (clients.find(fd) == clients.end())
+            {
+                --x;
+                continue;
+            }
 
             if (revents & (POLLHUP | POLLERR | POLLNVAL))
             {
