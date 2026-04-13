@@ -83,7 +83,18 @@ void Server::processLine(Client &client, const std::string &line)
     if (msg.command.empty())
         return;
 
+<<<<<<< Updated upstream
     if      (msg.command == "PASS") handlePass(client, msg);
+=======
+    //when hexchat trys connecting to a server it sends a CAP LS 
+    //command which is like asking the server what capabilities do you support
+    if(msg.command == "CAP") 
+    {
+        if (!msg.params.empty() && msg.params[0] == "LS")
+            sendToClient(client.fd, ":ircserv CAP * LS :\r\n");
+    }
+    else if (msg.command == "PASS") handlePass(client, msg);
+>>>>>>> Stashed changes
     else if (msg.command == "NICK") handleNick(client, msg);
     else if (msg.command == "USER") handleUser(client, msg);
     else if (msg.command == "PING") handlePing(client, msg);
