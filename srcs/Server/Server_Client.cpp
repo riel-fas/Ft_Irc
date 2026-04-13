@@ -1,4 +1,5 @@
 #include "../../includes/Server.hpp"
+#include "../../includes/Channel.hpp"
 #include <iostream>
 #include <sstream>      
 #include <stdexcept>    
@@ -95,6 +96,8 @@ void Server::processLine(Client &client, const std::string &line)
     else if (msg.command == "NICK") handleNick(client, msg);
     else if (msg.command == "USER") handleUser(client, msg);
     else if (msg.command == "PING") handlePing(client, msg);
+    else if (msg.command == "JOIN") handleJoin(client, msg);
+    else if (msg.command == "PRIVMSG") handlePrivmsg(client, msg);
     else if (msg.command == "QUIT") disconnectClient(client.fd);
     else
     {
@@ -103,8 +106,127 @@ void Server::processLine(Client &client, const std::string &line)
         else
             sendToClient(client.fd, makeReply(421, client.nick, msg.command + " :Unknown command"));
     }
-    // ZBEN_OMA!! add JOIN, PRIVMSG, MODE etc here
-    // ZBEN_OMA!! plug command handlers here
+    // ZBEN_OMA yonaffid hona
+}
+
+
+void Server::handleJoin(Client &client, const Message &msg)
+{
+    if (!client.registered)
+    {
+        sendToClient(client.fd, makeReply(451, "*", "You have not registered"));
+        return;
+    }
+    if (msg.params.empty())
+    {
+        sendToClient(client.fd, makeReply(461, client.nick, "Not enough parameters"));
+        return;
+    }
+
+    std::stringstream chanStream(msg.params[0]);
+    std::string channelName;
+    while (std::getline(chanStream, channelName, ','))
+    {
+        channelName = trim(channelName);
+        if (channelName.empty() || channelName[0] != '#')
+        {
+            sendToClient(client.fd, makeReply(476, client.nick, channelName + " :Invalid channel name"));
+            continue;
+        }
+
+        Channel *chan;
+        std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(channelName));
+        if (it == channelMap.end())
+        {
+            chan = new Channel(channelName);
+            channelMap[toLower(channelName)] = chan;
+        }
+        else
+            chan = it->second;
+
+        if (chan->isMember(client.fd))
+            continue;
+
+        chan->addMember(client.fd);
+        if (chan->getMemberCount() == 1)
+            chan->addOperator(client.fd);
+
+        std::string prefix = ":" + client.nick + "!" + client.user + "@" + client.hostname;
+        std::string joinMsg = prefix + " JOIN " + chan->getName() + "\r\n";
+        broadcastToChannel(chan, joinMsg);
+
+        if (chan->getTopic().empty())
+            sendToClient(client.fd, makeReply(331, client.nick, chan->getName() + " :No topic is set"));
+        else
+            sendToClient(client.fd, makeReply(332, client.nick, chan->getName() + " :" + chan->getTopic()));
+
+        std::string names;
+        const std::set<int> &members = chan->getMemberFds();
+        for (std::set<int>::const_iterator mit = members.begin(); mit != members.end(); ++mit)
+        {
+            std::map<int, Client *>::iterator cit = clients.find(*mit);
+            if (cit == clients.end())
+                continue;
+            if (!names.empty())
+                names += " ";
+            if (chan->isOp(*mit))
+                names += "@";
+            names += cit->second->nick;
+        }
+        sendToClient(client.fd, makeReply(353, client.nick, "= " + chan->getName() + " :" + names));
+        sendToClient(client.fd, makeReply(366, client.nick, chan->getName() + " :End of /NAMES list"));
+    }
+}
+
+
+void Server::handlePrivmsg(Client &client, const Message &msg)
+{
+    if (!client.registered)
+    {
+        sendToClient(client.fd, makeReply(451, "*", "You have not registered"));
+        return;
+    }
+    if (msg.params.empty())
+    {
+        sendToClient(client.fd, makeReply(411, client.nick, "No recipient given (PRIVMSG)"));
+        return;
+    }
+    if (msg.params.size() < 2 || msg.params[1].empty())
+    {
+        sendToClient(client.fd, makeReply(412, client.nick, "No text to send"));
+        return;
+    }
+
+    const std::string &target = msg.params[0];
+    const std::string &text = msg.params[1];
+    std::string wire = ":" + client.nick + "!" + client.user + "@" + client.hostname +
+                       " PRIVMSG " + target + " :" + text + "\r\n";
+
+    if (!target.empty() && target[0] == '#')
+    {
+        std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(target));
+        if (it == channelMap.end())
+        {
+            sendToClient(client.fd, makeReply(401, client.nick, target + " :No such nick/channel"));
+            return;
+        }
+        Channel *chan = it->second;
+        if (!chan->isMember(client.fd))
+        {
+            sendToClient(client.fd, makeReply(404, client.nick, target + " :Cannot send to channel"));
+            return;
+        }
+        broadcastToChannel(chan, wire, client.fd);
+        return;
+    }
+
+    std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(target));
+    if (nit == nickMap.end())
+    {
+        sendToClient(client.fd, makeReply(401, client.nick, target + " :No such nick/channel"));
+        return;
+    }
+    sendToClient(nit->second->fd, wire);
 }
 
 
