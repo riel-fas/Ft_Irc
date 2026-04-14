@@ -57,6 +57,11 @@ class Server
         void handlePing(Client &client, const Message &msg);
         void handleJoin(Client &client, const Message &msg);
         void handlePrivmsg(Client &client, const Message &msg);
+        void handleInvite(Client &client, const Message &msg);
+        void handleMode(Client &client, const Message &msg);
+        void handleTopic(Client &client, const Message &msg);
+        void handleKick(Client &client, const Message &msg);
+        void handleHelp(Client &client, const Message &msg);
         void sendWelcome(Client &client);
         // broadcast
         void broadcastToChannel(Channel *chan, const std::string &msg, int excludeFd = -1);
