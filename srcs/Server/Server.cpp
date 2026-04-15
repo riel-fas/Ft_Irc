@@ -20,7 +20,7 @@ Server::Server(int port, const std::string &password)
 
 Server::~Server()
 {
-    // Close all client connections
+    //close all client connections
     std::map<int, Client *>::iterator it;
     for (it = clients.begin(); it != clients.end(); ++it)
     {
@@ -29,22 +29,14 @@ Server::~Server()
     }
     clients.clear();
     nickMap.clear();
-
-
-    // Clean up channels
+    //clean up channels
     std::map<std::string, Channel *>::iterator cit;
     for (cit = channelMap.begin(); cit != channelMap.end(); ++cit)
     {
         delete cit->second;
     }
     channelMap.clear();
-
-
-
-
-
-
-    // Close the listening socket
+    //close the listening socket
     if (_serverFd != -1)
         close(_serverFd);
 }
@@ -121,27 +113,22 @@ void Server::run()
                     acceptClient();
                 continue;
             }
-
             if (revents & POLLIN)
                 handleRead(fd);
             //added fix for the segfault caused when a user get disconnected 
             //it get deleted it call the handle write 
-
             if (clients.find(fd) == clients.end())
             {
                 --x;
                 continue;
             }
-
             if (revents & POLLOUT)
                 handleWrite(fd);
-
             if (clients.find(fd) == clients.end())
             {
                 --x;
                 continue;
             }
-
             if (revents & (POLLHUP | POLLERR | POLLNVAL))
             {
                 disconnectClient(fd);

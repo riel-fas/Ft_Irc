@@ -32,12 +32,13 @@ Message Server::parseMessage(const std::string &line)
         return msg;
     pos = command_end + 1;
     while(pos < end && line[pos] == ' ')
-        pos++; //skip extra spaces if there was
+        pos++; 
+    //skip extra spaces if there was
     while (pos < end)
     {
         if (line[pos] == ':')
         {
-            //trailing param = rest of line is ONE parameter[spaces allowed]
+            //trailing param = rest of line is 1 parameter[spaces allowed]
             msg.params.push_back(line.substr(pos + 1));
             break;
         }

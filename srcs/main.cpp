@@ -7,6 +7,13 @@
 
 bool g_running = true;
 
+//for leaks check
+// void ll()
+// {
+//     system("leaks -q ircserv");
+// }
+
+
 static void signal_handler(int sig)
 {
     (void)sig;        
@@ -26,15 +33,9 @@ static int validate_port(const char *str)
     //         || val == 143 || val == 161 || val == 443 || val == 445 || val == 631 || val < 0 || val > 65535)
     //     return -1;
     if (val < 1 || val > 65535)
-        return -1; //its not required in subj, to block known ports [until final stage discussion]
+        return -1; 
+    //its not required in subj, to block known ports
     return static_cast<int>(val);
-}
-
-
-//for leaks check
-void ll()
-{
-    system("leaks -q ircserv");
 }
 
 
@@ -61,8 +62,8 @@ int main(int ac, char **av)
         std::cerr << "Password cannot be empty" << std::endl;
         return 1;
     }
-    atexit(ll);
-    //ctrl/c + ctrl/backslash + broken pipe
+    // atexit(ll); for leaks check
+    //ctrl/c + ctrl/backslash + broken pipe(signals ":(")
     signal(SIGINT,  signal_handler);  
     signal(SIGQUIT, signal_handler);  
     signal(SIGPIPE, SIG_IGN);         
@@ -75,7 +76,6 @@ int main(int ac, char **av)
     {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
-
     }
     return 0;
 }

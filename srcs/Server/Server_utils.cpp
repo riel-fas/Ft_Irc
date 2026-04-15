@@ -31,7 +31,6 @@ void Server::enableWrite(int fd)
         it->events |= POLLOUT;   //bitwise OR — adds POLLOUT, keeps POLLIN
 }
 
-
 void Server::disableWrite(int fd)
 {
     std::vector<struct pollfd>::iterator it = findPollfd(fd);
@@ -86,5 +85,3 @@ std::string Server::join(const std::vector<std::string> &params, const std::stri
     }
     return result;
 }
-
-

@@ -10,10 +10,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 //handle read event on client 
-// Key insight: TCP is a STREAM, not a message protocol.
-// recv() may return:
+//Key insight: TCP is a STREAM, not a message protocol.
+//recv() may return:
 // >>> full IRC message  "NICK alice\r\n"
 // >>> partial message   "NICK al" must buffer and wait
 // >>> multiple messages   "NICK a\r\nUSER ...\r\n" must handle all
@@ -38,8 +37,7 @@ void Server::handleRead(int fd)
     }
     buff[bytes] = '\0';
     clients[fd]->recvbuff.append(buff, bytes);
-
-    // Limit buffer size to prevent memory exhaustion / OOM attacks
+    //limit buffer size to prevent memory exhaustion / OOM attacks(rfc 1459)
     if (clients[fd]->recvbuff.size() > 4096)
     {
         std::string err = "ERROR :Closing Link: Buffer limit exceeded\r\n";
@@ -47,7 +45,6 @@ void Server::handleRead(int fd)
         disconnectClient(fd);
         return;
     }
-
     //scan for the buffer
     processBuffer(*clients[fd]);
 }
@@ -63,7 +60,7 @@ void    Server::handleWrite(int fd)
     if (sent < 0)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;     // kernel buffer full — try again next POLLOUT
+            return;     //kernel buffer full — try again next POLLOUT
         disconnectClient(fd);
         return;
     }

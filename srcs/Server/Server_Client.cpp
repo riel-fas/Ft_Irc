@@ -30,7 +30,7 @@ static bool parsePositiveInt(const std::string &str, int &out)
     return true;
 }
 
-// called when POLLIN (for more infos check signals !!!) fires on the server fd
+//called when POLLIN (for more infos check signals !!!) fires on the server fd
 void Server::acceptClient()
 {
     struct sockaddr_in clientAddr;
@@ -39,12 +39,12 @@ void Server::acceptClient()
     int newFd = accept(_serverFd, (struct sockaddr *)&clientAddr, &len);
     if (newFd < 0)
     {
-        // EAGAIN/EWOULDBLOCK can happen on non-blocking accept — not a real error
+        //EAGAIN/EWOULDBLOCK can happen on non-blocking accept — not a real error
         if (errno != EAGAIN && errno != EWOULDBLOCK)
             std::cerr << "accept() error: " << strerror(errno) << std::endl;
         return;
     }
-    // make new client(MACOS-only)
+    //make new client(MACOS-only)
     if (fcntl(newFd, F_SETFL, O_NONBLOCK) < 0)
     {
         std::cerr << "fcntl() on client fd failed: " << strerror(errno) << std::endl;
@@ -56,7 +56,7 @@ void Server::acceptClient()
     pfd.events = POLLIN;
     pfd.revents = 0;
     _fds.push_back(pfd);
-    // Create Client object and store it
+    //create Client object and store it
     Client *client = new Client(newFd);
     client->hostname = inet_ntoa(clientAddr.sin_addr);
     clients[newFd] = client;
@@ -64,44 +64,40 @@ void Server::acceptClient()
     std::cout << "New connection from " << client->hostname << " (fd=" << newFd << ")" << std::endl;
 }
 
-// handles \r and \n
+//handles \r and \n (standard msg delimeter)
 void Server::processBuffer(Client &client)
 {
     int clientFd = client.fd;
     while (true)
     {
-        // check if client was disconnected in a previous command
+        //check if client was disconnected in a previous command(for safety)
         std::map<int, Client *>::iterator it = clients.find(clientFd);
         if (it == clients.end())
             break;
 
         std::string &buf = client.recvbuff;
-
         std::string::size_type pos = buf.find("\r\n");
         if (pos == std::string::npos)
-            pos = buf.find("\n"); // Also accept just \n
-
+            pos = buf.find("\n"); //it accepts also just \n
         if (pos == std::string::npos)
             break;
-
         std::string line = buf.substr(0, pos);
-        // Remove the delimiter(s)
+        //removes the delimiter(s)
         if (buf[pos] == '\r' && pos + 1 < buf.size() && buf[pos + 1] == '\n')
             buf = buf.substr(pos + 2);
         else
             buf = buf.substr(pos + 1);
-
         if (!line.empty())
             processLine(client, line);
     }
 }
 
+//process line for any of the cmds if nothing found it handles it
 void Server::processLine(Client &client, const std::string &line)
 {
     Message msg = parseMessage(line);
     if (msg.command.empty())
         return;
-
     if(msg.command == "CAP") 
     {
         if (!msg.params.empty() && msg.params[0] == "LS")
@@ -138,7 +134,6 @@ void Server::processLine(Client &client, const std::string &line)
         else
             sendToClient(client.fd, makeReply(421, client.nick, msg.command + " :Unknown command"));
     }
-    // ZBEN_OMA yonaffid hona
 }
 
 void Server::handleJoin(Client &client, const Message &msg)
@@ -153,13 +148,11 @@ void Server::handleJoin(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(461, client.nick, "Not enough parameters"));
         return;
     }
-
     std::vector<std::string> channelNames;
     std::stringstream chanStream(msg.params[0]);
     std::string token;
     while (std::getline(chanStream, token, ','))
         channelNames.push_back(trim(token));
-
     std::vector<std::string> keys;
     if (msg.params.size() > 1)
     {
@@ -167,7 +160,6 @@ void Server::handleJoin(Client &client, const Message &msg)
         while (std::getline(keyStream, token, ','))
             keys.push_back(trim(token));
     }
-
     for (size_t i = 0; i < channelNames.size(); ++i)
     {
         std::string channelName = channelNames[i];
@@ -177,7 +169,6 @@ void Server::handleJoin(Client &client, const Message &msg)
             sendToClient(client.fd, makeReply(476, client.nick, channelName + " :Invalid channel name"));
             continue;
         }
-
         Channel *chan;
         std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(channelName));
         if (it == channelMap.end())
@@ -206,21 +197,17 @@ void Server::handleJoin(Client &client, const Message &msg)
             sendToClient(client.fd, makeReply(475, client.nick, channelName + " :Cannot join channel (+k)"));
             continue;
         }
-
         chan->addMember(client.fd);
         chan->removeInvite(client.fd);
         if (chan->getMemberCount() == 1)
             chan->addOperator(client.fd);
-
         std::string prefix = ":" + client.nick + "!" + client.user + "@" + client.hostname;
         std::string joinMsg = prefix + " JOIN " + chan->getName() + "\r\n";
         broadcastToChannel(chan, joinMsg);
-
         if (chan->getTopic().empty())
             sendToClient(client.fd, makeReply(331, client.nick, chan->getName() + " :No topic is set"));
         else
             sendToClient(client.fd, makeReply(332, client.nick, chan->getName() + " :" + chan->getTopic()));
-
         std::string names;
         const std::set<int> &members = chan->getMemberFds();
         for (std::set<int>::const_iterator mit = members.begin(); mit != members.end(); ++mit)
@@ -256,12 +243,9 @@ void Server::handlePrivmsg(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(412, client.nick, "No text to send"));
         return;
     }
-
     const std::string &target = msg.params[0];
     const std::string &text = msg.params[1];
-    std::string wire = ":" + client.nick + "!" + client.user + "@" + client.hostname +
-                       " PRIVMSG " + target + " :" + text + "\r\n";
-
+    std::string wire = ":" + client.nick + "!" + client.user + "@" + client.hostname + " PRIVMSG " + target + " :" + text + "\r\n";
     if (!target.empty() && target[0] == '#')
     {
         std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(target));
@@ -279,7 +263,6 @@ void Server::handlePrivmsg(Client &client, const Message &msg)
         broadcastToChannel(chan, wire, client.fd);
         return;
     }
-
     std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(target));
     if (nit == nickMap.end())
     {
@@ -301,24 +284,20 @@ void Server::handleInvite(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(461, client.nick, "INVITE :Not enough parameters"));
         return;
     }
-
     const std::string &targetNick = msg.params[0];
     const std::string &channelName = msg.params[1];
-
     std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(targetNick));
     if (nit == nickMap.end())
     {
         sendToClient(client.fd, makeReply(401, client.nick, targetNick + " :No such nick/channel"));
         return;
     }
-
     std::map<std::string, Channel *>::iterator cit = channelMap.find(toLower(channelName));
     if (cit == channelMap.end())
     {
         sendToClient(client.fd, makeReply(403, client.nick, channelName + " :No such channel"));
         return;
     }
-
     Channel *chan = cit->second;
     if (!chan->isMember(client.fd))
     {
@@ -335,12 +314,10 @@ void Server::handleInvite(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(443, client.nick, targetNick + " " + channelName + " :is already on channel"));
         return;
     }
-
     chan->addInvite(nit->second->fd);
     sendToClient(client.fd, makeReply(341, client.nick, targetNick + " " + channelName));
 
-    std::string inviteMsg = ":" + client.nick + "!" + client.user + "@" + client.hostname +
-                            " INVITE " + targetNick + " :" + channelName + "\r\n";
+    std::string inviteMsg = ":" + client.nick + "!" + client.user + "@" + client.hostname + " INVITE " + targetNick + " :" + channelName + "\r\n";
     sendToClient(nit->second->fd, inviteMsg);
 }
 
@@ -356,21 +333,18 @@ void Server::handleMode(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(461, client.nick, "MODE :Not enough parameters"));
         return;
     }
-
     const std::string &target = msg.params[0];
     if (target.empty() || target[0] != '#')
     {
         sendToClient(client.fd, makeReply(501, client.nick, "Unknown MODE flag"));
         return;
     }
-
     std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(target));
     if (it == channelMap.end())
     {
         sendToClient(client.fd, makeReply(403, client.nick, target + " :No such channel"));
         return;
     }
-
     Channel *chan = it->second;
     if (msg.params.size() == 1)
     {
@@ -389,7 +363,6 @@ void Server::handleMode(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(324, client.nick, chan->getName() + " " + modes + modeArgs));
         return;
     }
-
     if (!chan->isMember(client.fd))
     {
         sendToClient(client.fd, makeReply(442, client.nick, chan->getName() + " :You're not on that channel"));
@@ -400,14 +373,12 @@ void Server::handleMode(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(482, client.nick, chan->getName() + " :You're not channel operator"));
         return;
     }
-
     const std::string &modeString = msg.params[1];
     bool adding = true;
     size_t argIndex = 2;
     std::string modeOut;
     char currentOutSign = '\0';
     std::vector<std::string> modeOutArgs;
-
     for (size_t i = 0; i < modeString.size(); ++i)
     {
         char m = modeString[i];
@@ -416,7 +387,6 @@ void Server::handleMode(Client &client, const Message &msg)
             adding = (m == '+');
             continue;
         }
-
         if (m == 'i')
             chan->setInviteOnly(adding);
         else if (m == 't')
@@ -466,7 +436,6 @@ void Server::handleMode(Client &client, const Message &msg)
                 sendToClient(client.fd, makeReply(461, client.nick, "MODE :Not enough parameters"));
                 return;
             }
-
             const std::string &opNick = msg.params[argIndex];
             std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(opNick));
             if (nit == nickMap.end() || !chan->isMember(nit->second->fd))
@@ -475,7 +444,6 @@ void Server::handleMode(Client &client, const Message &msg)
                 ++argIndex;
                 continue;
             }
-
             if (adding)
                 chan->addOperator(nit->second->fd);
             else
@@ -488,7 +456,6 @@ void Server::handleMode(Client &client, const Message &msg)
             sendToClient(client.fd, makeReply(472, client.nick, std::string(1, m) + " :is unknown mode char to me"));
             continue;
         }
-
         char sign = adding ? '+' : '-';
         if (currentOutSign != sign)
         {
@@ -497,7 +464,6 @@ void Server::handleMode(Client &client, const Message &msg)
         }
         modeOut += m;
     }
-
     if (!modeOut.empty())
     {
         std::string prefix = ":" + client.nick + "!" + client.user + "@" + client.hostname;
@@ -521,7 +487,6 @@ void Server::handleTopic(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(461, client.nick, "TOPIC :Not enough parameters"));
         return;
     }
-
     const std::string &channelName = msg.params[0];
     std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(channelName));
     if (it == channelMap.end())
@@ -529,14 +494,12 @@ void Server::handleTopic(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(403, client.nick, channelName + " :No such channel"));
         return;
     }
-
     Channel *chan = it->second;
     if (!chan->isMember(client.fd))
     {
         sendToClient(client.fd, makeReply(442, client.nick, channelName + " :You're not on that channel"));
         return;
     }
-
     if (msg.params.size() == 1)
     {
         if (chan->getTopic().empty())
@@ -545,13 +508,11 @@ void Server::handleTopic(Client &client, const Message &msg)
             sendToClient(client.fd, makeReply(332, client.nick, chan->getName() + " :" + chan->getTopic()));
         return;
     }
-
     if (chan->isTopicRestricted() && !chan->isOp(client.fd))
     {
         sendToClient(client.fd, makeReply(482, client.nick, chan->getName() + " :You're not channel operator"));
         return;
     }
-
     const std::string &newTopic = msg.params[1];
     chan->setTopic(newTopic);
 
@@ -572,17 +533,14 @@ void Server::handleKick(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(461, client.nick, "KICK :Not enough parameters"));
         return;
     }
-
     const std::string &channelName = msg.params[0];
     const std::string &targetNick = msg.params[1];
-
     std::map<std::string, Channel *>::iterator cit = channelMap.find(toLower(channelName));
     if (cit == channelMap.end())
     {
         sendToClient(client.fd, makeReply(403, client.nick, channelName + " :No such channel"));
         return;
     }
-
     Channel *chan = cit->second;
     if (!chan->isMember(client.fd))
     {
@@ -594,7 +552,6 @@ void Server::handleKick(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(482, client.nick, channelName + " :You're not channel operator"));
         return;
     }
-
     std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(targetNick));
     if (nit == nickMap.end())
     {
@@ -606,12 +563,10 @@ void Server::handleKick(Client &client, const Message &msg)
         sendToClient(client.fd, makeReply(441, client.nick, targetNick + " " + channelName + " :They aren't on that channel"));
         return;
     }
-
     std::string reason = (msg.params.size() > 2) ? msg.params[2] : client.nick;
     std::string prefix = ":" + client.nick + "!" + client.user + "@" + client.hostname;
     std::string kickMsg = prefix + " KICK " + chan->getName() + " " + nit->second->nick + " :" + reason + "\r\n";
     broadcastToChannel(chan, kickMsg);
-
     chan->removeMember(nit->second->fd);
     if (chan->getMemberCount() == 0)
     {
@@ -636,11 +591,11 @@ void Server::disconnectClient(int fd)
     std::cout << "Client disconnected (fd=" << fd << ", nick="
               << it->second->nick << ")" << std::endl;
 
-    // Remove from nickMap
+    //remove from nickMap
     if (!it->second->nick.empty())
         nickMap.erase(toLower(it->second->nick));
 
-    // Remove from all channels
+    //remove from all channels
     std::map<std::string, Channel *>::iterator cit = channelMap.begin();
     while (cit != channelMap.end())
     {
@@ -659,11 +614,11 @@ void Server::disconnectClient(int fd)
         ++cit;
     }
 
-    // Remove from _fds vector
+    //remove from _fds vector
     std::vector<struct pollfd>::iterator pIt = findPollfd(fd);
     if (pIt != _fds.end())
         _fds.erase(pIt);
-    // Close the socket and free memory
+    //close the socket and free memory
     close(fd);
     delete it->second;
     clients.erase(it);
@@ -673,29 +628,9 @@ void Server::sendToClient(int fd, const std::string &msg)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);
     if (it == clients.end())
-        return; // client already disconnected
+        return; //client already disconnected
 
     it->second->sendQueue += msg;
-    // signal poll() that we have data to write
+    //signal poll() that we have data to write
     enableWrite(fd);
 }
-
-/////////////////////////////////////////////////////////
-// old_version of process buffer
-// still in testing
-//  void    Server::processBuffer(Client &client)
-//  {
-//      std::string &buf  = client.recvbuff;
-//      while (true)
-//      {
-//          std::string::size_type pos = buf.find("\r\n");
-//          if (pos == std::string::npos)
-//              break; // No complete line yet
-//          std::string line = buf.substr(0, pos);
-//          buf = buf.substr(pos + 2); // Remove processed line from buffer
-//          if(!line.empty())
-//              processLine(client, line);
-//              //to be donex
-//      }
-//  }
-///////////////////keep in case of a change////////////////////

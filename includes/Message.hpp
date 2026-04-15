@@ -11,5 +11,4 @@ struct Message
     std::vector<std::string> params;
 };
 
-
 #endif
