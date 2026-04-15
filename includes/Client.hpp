@@ -9,12 +9,11 @@ class Client
         int fd;
         std::string recvbuff;
         std::string sendQueue;
-        //will be needed for {yabenman} for (user idenetity)
         std::string nick;
         std::string user;
         std::string realname;
         std::string hostname;
-        //will be needed for authentication (yabenman) for (password)
+
         bool passOk;
         bool nickOk;
         bool userOk;
@@ -30,4 +29,3 @@ class Client
 };
 
 #endif
-//PS: no need to respect the canonical form no mention to it in the subject

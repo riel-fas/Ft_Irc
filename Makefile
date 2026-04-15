@@ -87,6 +87,11 @@ $(NAME): $(OBJS)
 	@echo "  $(CYAN)QUIT$(RESET)     [:<reason>]"
 	@echo ""
 
+bonus:
+	@echo "$(CYAN)Compiling l7aj_bot (bonus)...$(RESET)"
+	$(MAKE) -C bot
+	@echo "$(GREEN)✓ l7aj_bot built successfully!$(RESET)"
+
 %.o : %.cpp $(HEADER)
 	@echo "$(CYAN)Compiling $<...$(RESET)"
 	$(C) $(FLAGS) -c $< -o $@ 
@@ -94,12 +99,14 @@ $(NAME): $(OBJS)
 clean:
 	@echo "$(RED)Cleaning object files...$(RESET)"
 	rm -f $(OBJS)
+	$(MAKE) -C bot clean
 
 fclean: clean
 	@echo "$(RED)Removing executable...$(RESET)"
 	rm -f $(NAME)
+	$(MAKE) -C bot fclean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re bonus
 

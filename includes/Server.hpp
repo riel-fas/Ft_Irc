@@ -1,7 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-
 #include <string>
 #include <vector>
 #include <map>
@@ -10,8 +9,6 @@
 #include "Client.hpp"
 #include "Message.hpp"
 #include "Channel.hpp"
-
-
 class Server
 {
     public:
@@ -23,21 +20,17 @@ class Server
         std::map<int, Client *> clients;
         std::map<std::string, Client *> nickMap;
         std::map<std::string, Channel *> channelMap;
-
-
+        //maping cheannels(its the main thing making the channels and joining them or kick from them possible)
         ~Server();
-
 
     private:
         Server(const Server &);
         Server &operator=(const Server &);
 
-
         int                        _port;
         int                        _serverFd;
         std::vector<struct pollfd> _fds;
         std::string                _password;
-
 
         void setupSocket();
         void acceptClient();
@@ -50,11 +43,13 @@ class Server
         void disableWrite(int fd);
         std::vector<struct pollfd>::iterator findPollfd(int fd);
         Message parseMessage(const std::string &line);
-        // auth commands
+        //auth commands
         void handlePass(Client &client, const Message &msg);
         void handleNick(Client &client, const Message &msg);
         void handleUser(Client &client, const Message &msg);
+        //ping /\ pong
         void handlePing(Client &client, const Message &msg);
+        //cmds (this what makes the server and its channels functionnal)
         void handleJoin(Client &client, const Message &msg);
         void handlePrivmsg(Client &client, const Message &msg);
         void handleInvite(Client &client, const Message &msg);
@@ -63,9 +58,9 @@ class Server
         void handleKick(Client &client, const Message &msg);
         void handleHelp(Client &client, const Message &msg);
         void sendWelcome(Client &client);
-        // broadcast
+        //broadcast
         void broadcastToChannel(Channel *chan, const std::string &msg, int excludeFd = -1);
-        // utility
+        //utilities
         std::string makeReply(int code, const std::string &target, const std::string &msg);
         std::string toLower(const std::string &str);
         std::string itostr(int n);
