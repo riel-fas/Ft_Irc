@@ -32,9 +32,7 @@ Server::~Server()
     //clean up channels
     std::map<std::string, Channel *>::iterator cit;
     for (cit = channelMap.begin(); cit != channelMap.end(); ++cit)
-    {
         delete cit->second;
-    }
     channelMap.clear();
     //close the listening socket
     if (_serverFd != -1)

@@ -60,7 +60,6 @@ void Server::acceptClient()
     Client *client = new Client(newFd);
     client->hostname = inet_ntoa(clientAddr.sin_addr);
     clients[newFd] = client;
-
     std::cout << "New connection from " << client->hostname << " (fd=" << newFd << ")" << std::endl;
 }
 
@@ -115,6 +114,8 @@ void Server::processLine(Client &client, const std::string &line)
         handleJoin(client, msg);
     else if (msg.command == "PRIVMSG")
         handlePrivmsg(client, msg);
+    else if (msg.command == "NOTICE")
+        handleNotice(client, msg);
     else if (msg.command == "INVITE")
         handleInvite(client, msg);
     else if (msg.command == "MODE")
@@ -272,6 +273,35 @@ void Server::handlePrivmsg(Client &client, const Message &msg)
     sendToClient(nit->second->fd, wire);
 }
 
+void Server::handleNotice(Client &client, const Message &msg)
+{
+    if (!client.registered)
+        return;
+    if (msg.params.size() < 2 || msg.params[0].empty() || msg.params[1].empty())
+        return;
+
+    const std::string &target = msg.params[0];
+    const std::string &text = msg.params[1];
+    std::string wire = ":" + client.nick + "!" + client.user + "@" + client.hostname + " NOTICE " + target + " :" + text + "\r\n";
+
+    if (target[0] == '#')
+    {
+        std::map<std::string, Channel *>::iterator it = channelMap.find(toLower(target));
+        if (it == channelMap.end())
+            return;
+        Channel *chan = it->second;
+        if (!chan->isMember(client.fd))
+            return;
+        broadcastToChannel(chan, wire, client.fd);
+        return;
+    }
+
+    std::map<std::string, Client *>::iterator nit = nickMap.find(toLower(target));
+    if (nit == nickMap.end())
+        return;
+    sendToClient(nit->second->fd, wire);
+}
+
 void Server::handleInvite(Client &client, const Message &msg)
 {
     if (!client.registered)
@@ -316,7 +346,6 @@ void Server::handleInvite(Client &client, const Message &msg)
     }
     chan->addInvite(nit->second->fd);
     sendToClient(client.fd, makeReply(341, client.nick, targetNick + " " + channelName));
-
     std::string inviteMsg = ":" + client.nick + "!" + client.user + "@" + client.hostname + " INVITE " + targetNick + " :" + channelName + "\r\n";
     sendToClient(nit->second->fd, inviteMsg);
 }
@@ -515,7 +544,6 @@ void Server::handleTopic(Client &client, const Message &msg)
     }
     const std::string &newTopic = msg.params[1];
     chan->setTopic(newTopic);
-
     std::string prefix = ":" + client.nick + "!" + client.user + "@" + client.hostname;
     std::string topicMsg = prefix + " TOPIC " + chan->getName() + " :" + newTopic + "\r\n";
     broadcastToChannel(chan, topicMsg);
@@ -588,13 +616,33 @@ void Server::disconnectClient(int fd)
     if (it == clients.end())
         return; // already cleaned up
 
+    Client *leaver = it->second;
+    // Broadcast QUIT once to all peers that share at least one channel.
+    if (leaver->registered && !leaver->nick.empty())
+    {
+        std::set<int> notifyFds;
+        std::map<std::string, Channel *>::iterator cit = channelMap.begin();
+        for (; cit != channelMap.end(); ++cit)
+        {
+            Channel *chan = cit->second;
+            if (!chan->isMember(fd))
+                continue;
+            const std::set<int> &members = chan->getMemberFds();
+            for (std::set<int>::const_iterator mit = members.begin(); mit != members.end(); ++mit)
+            {
+                if (*mit != fd)
+                    notifyFds.insert(*mit);
+            }
+        }
+        std::string quitMsg = ":" + leaver->nick + "!" + leaver->user + "@" + leaver->hostname + " QUIT :Client Quit\r\n";
+        for (std::set<int>::const_iterator nit = notifyFds.begin(); nit != notifyFds.end(); ++nit)
+            sendToClient(*nit, quitMsg);
+    }
     std::cout << "Client disconnected (fd=" << fd << ", nick="
               << it->second->nick << ")" << std::endl;
-
     //remove from nickMap
     if (!it->second->nick.empty())
         nickMap.erase(toLower(it->second->nick));
-
     //remove from all channels
     std::map<std::string, Channel *>::iterator cit = channelMap.begin();
     while (cit != channelMap.end())
@@ -603,7 +651,6 @@ void Server::disconnectClient(int fd)
         if (chan->isMember(fd))
         {
             chan->removeMember(fd);
-            // ZBEN_OMA broadcast QUIT to shared channels will be added in Phase 3
             if (chan->getMemberCount() == 0)
             {
                 delete chan;
@@ -613,7 +660,6 @@ void Server::disconnectClient(int fd)
         }
         ++cit;
     }
-
     //remove from _fds vector
     std::vector<struct pollfd>::iterator pIt = findPollfd(fd);
     if (pIt != _fds.end())

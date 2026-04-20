@@ -11,7 +11,6 @@
 #include <arpa/inet.h>
 #include <cctype>
 
-
 std::vector<struct pollfd>::iterator Server::findPollfd(int fd)
 {
     std::vector<struct pollfd>::iterator it = _fds.begin();

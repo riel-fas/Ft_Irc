@@ -52,6 +52,7 @@ class Server
         //cmds (this what makes the server and its channels functionnal)
         void handleJoin(Client &client, const Message &msg);
         void handlePrivmsg(Client &client, const Message &msg);
+        void handleNotice(Client &client, const Message &msg);
         void handleInvite(Client &client, const Message &msg);
         void handleMode(Client &client, const Message &msg);
         void handleTopic(Client &client, const Message &msg);

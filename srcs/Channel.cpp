@@ -10,6 +10,7 @@ Channel::~Channel()
 {
 }
 
+
 //getters
 const std::string &Channel::getName() const 
 { 

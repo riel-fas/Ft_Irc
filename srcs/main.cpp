@@ -13,7 +13,6 @@ bool g_running = true;
 //     system("leaks -q ircserv");
 // }
 
-
 static void signal_handler(int sig)
 {
     (void)sig;        

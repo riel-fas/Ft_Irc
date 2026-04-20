@@ -1,14 +1,14 @@
 #include "Bot.hpp"
 
 //the bot will auth like any other user , it will be working with 2 cmds SALAM && NASI7A
-
 Bot::Bot(const std::string& ip, int port, const std::string& pass)
     : _serverIP(ip), _port(port), _password(pass), _socketFd(-1), _nickname("l7aj") 
     {
     _initAdvices();
 }
 
-Bot::~Bot() {
+Bot::~Bot() 
+{
     if (_socketFd != -1) 
         close(_socketFd);
 }

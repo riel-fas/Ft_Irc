@@ -19,7 +19,7 @@ std::string Server::makeReply(int code, const std::string &target, const std::st
 //PASS <password>
 void Server::handlePass(Client &client, const Message &msg)
 {
-    if (client.registered)
+    if (client.registered || client.passOk)
     {
         sendToClient(client.fd, makeReply(462, client.nick, "You may not reregister"));
         return;
@@ -31,9 +31,7 @@ void Server::handlePass(Client &client, const Message &msg)
     }
     if (msg.params[0] != _password)
     {
-        std::string err = makeReply(464, client.nick, "Password incorrect");
-        send(client.fd, err.c_str(), err.size(), 0);
-        disconnectClient(client.fd);
+        sendToClient(client.fd, makeReply(464, client.nick, "Password incorrect"));
         return;
     }
     client.passOk = true;
@@ -54,7 +52,6 @@ void Server::handleNick(Client &client, const Message &msg)
         return;
     }
     std::string newNick = msg.params[0];
-
     // validate — letters, digits, and -_[]{}|\ only, max 9 chars(rfc1459)
     if (newNick.size() > 9)
     {
@@ -107,7 +104,7 @@ void Server::handleNick(Client &client, const Message &msg)
 //USER <username> <hostname> <servername> :<realname>
 void Server::handleUser(Client &client, const Message &msg)
 {
-    if (client.registered)
+    if (client.registered || client.userOk)
     {
         sendToClient(client.fd, makeReply(462, client.nick, "You may not reregister"));
         return;
@@ -142,13 +139,9 @@ void Server::sendWelcome(Client &client)
 {
     std::string nick = client.nick;
     std::string mask = nick + "!" + client.user + "@" + client.hostname;
-
-
     sendToClient(client.fd, makeReply(001, nick, "Welcome to the IRC Network " + mask));
     sendToClient(client.fd, makeReply(002, nick, "Your host is ircserv, running version 1.0"));
     sendToClient(client.fd, makeReply(003, nick, "This server was created today"));
     sendToClient(client.fd, makeReply(004, nick, "ircserv 1.0 o o"));
-
-
     std::cout << "Client registered: " << mask << std::endl;
 }
